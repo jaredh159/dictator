@@ -1,6 +1,13 @@
-# dictator
+# 💂 dictator
 
 macos menu bar app for voice dictation. records your voice, transcribes with openai whisper, cleans up the text with gpt-4o-mini, and copies to clipboard.
+
+## installation
+
+1. clone the repo
+2. open `Dictator.xcodeproj` in xcode
+3. select your signing team in **Signing & Capabilities** (your personal team works fine)
+4. build and run
 
 ## setup
 
@@ -16,14 +23,6 @@ create a config file at `~/.config/dictator.json`:
 optional config keys:
 - `hotkey`: customize the hotkey, e.g. `"cmd-shift-d"` or `"ctrl-opt-k"`. default is `"cmd-shift-k"`
 
-then build and run:
-
-```
-just run
-```
-
-or open `Dictator.xcodeproj` in xcode if you prefer.
-
 ## usage
 
 - `cmd-shift-k` to summon the window and start recording
@@ -38,3 +37,12 @@ the app runs in your menu bar. doesn't steal focus from your current app.
 
 - macos 15+
 - openai api key with access to whisper and gpt-4o-mini
+
+## microphone permissions
+
+the app will request microphone access on first launch. if you don't see a prompt or recording isn't working:
+
+1. open **System Settings → Privacy & Security → Microphone**
+2. find Dictator in the list and enable it
+
+if you previously denied permission, macos won't prompt again—you'll need to enable it manually in System Settings.
