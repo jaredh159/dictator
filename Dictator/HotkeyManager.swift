@@ -2,27 +2,37 @@ import Carbon.HIToolbox
 import Foundation
 
 class HotkeyManager {
-    private var hotkeyRef: EventHotKeyRef?
-    private var handler: (() -> Void)?
+    private var hotkeyRefs: [UInt32: EventHotKeyRef] = [:]
+    private var eventHandlerRef: EventHandlerRef?
 
-    private static var sharedHandler: (() -> Void)?
+    private static var handlers: [UInt32: () -> Void] = [:]
 
-    func register(keyCode: UInt32, modifiers: UInt32, handler: @escaping () -> Void) {
-        self.handler = handler
-        HotkeyManager.sharedHandler = handler
-
-        var eventType = EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed))
+    func registerMultiple(hotkeys: [(id: UInt32, keyCode: UInt32, modifiers: UInt32, handler: () -> Void)]) {
+        var eventType = EventTypeSpec(
+            eventClass: OSType(kEventClassKeyboard),
+            eventKind: UInt32(kEventHotKeyPressed)
+        )
 
         let status = InstallEventHandler(
             GetApplicationEventTarget(),
             { (_, event, _) -> OSStatus in
-                HotkeyManager.sharedHandler?()
+                var hotkeyID = EventHotKeyID()
+                GetEventParameter(
+                    event,
+                    EventParamName(kEventParamDirectObject),
+                    EventParamType(typeEventHotKeyID),
+                    nil,
+                    MemoryLayout<EventHotKeyID>.size,
+                    nil,
+                    &hotkeyID
+                )
+                HotkeyManager.handlers[hotkeyID.id]?()
                 return noErr
             },
             1,
             &eventType,
             nil,
-            nil
+            &eventHandlerRef
         )
 
         guard status == noErr else {
@@ -30,25 +40,32 @@ class HotkeyManager {
             return
         }
 
-        let hotkeyID = EventHotKeyID(signature: OSType(0x4454_4352), id: 1) // "DTCR"
+        for hotkey in hotkeys {
+            HotkeyManager.handlers[hotkey.id] = hotkey.handler
 
-        let registerStatus = RegisterEventHotKey(
-            keyCode,
-            modifiers,
-            hotkeyID,
-            GetApplicationEventTarget(),
-            0,
-            &hotkeyRef
-        )
+            let hotkeyID = EventHotKeyID(signature: OSType(0x4454_4352), id: hotkey.id)
+            var hotkeyRef: EventHotKeyRef?
 
-        if registerStatus != noErr {
-            print("Failed to register hotkey: \(registerStatus)")
+            let registerStatus = RegisterEventHotKey(
+                hotkey.keyCode,
+                hotkey.modifiers,
+                hotkeyID,
+                GetApplicationEventTarget(),
+                0,
+                &hotkeyRef
+            )
+
+            if registerStatus == noErr, let ref = hotkeyRef {
+                hotkeyRefs[hotkey.id] = ref
+            } else {
+                print("Failed to register hotkey \(hotkey.id): \(registerStatus)")
+            }
         }
     }
 
     deinit {
-        if let hotkeyRef = hotkeyRef {
-            UnregisterEventHotKey(hotkeyRef)
+        for (_, ref) in hotkeyRefs {
+            UnregisterEventHotKey(ref)
         }
     }
 }

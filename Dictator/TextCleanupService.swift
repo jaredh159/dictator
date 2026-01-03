@@ -23,12 +23,12 @@ actor TextCleanupService {
         Return ONLY the cleaned markdown, no explanations or preamble.
         """
 
-    func cleanup(text: String) async throws -> String {
+    func cleanup(text: String, prompt: String?) async throws -> String {
         guard let config = Config.shared else {
             throw CleanupError.apiError("Missing config. Create ~/.config/dictator.json")
         }
 
-        let prompt = config.cleanupPrompt ?? defaultPrompt
+        let systemPrompt = prompt ?? defaultPrompt
         log.info("Starting text cleanup, input length: \(text.count)")
 
         var request = URLRequest(url: endpoint)
@@ -39,7 +39,7 @@ actor TextCleanupService {
         let body: [String: Any] = [
             "model": "gpt-4o-mini",
             "messages": [
-                ["role": "system", "content": prompt],
+                ["role": "system", "content": systemPrompt],
                 ["role": "user", "content": text],
             ],
         ]

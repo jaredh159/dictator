@@ -4,14 +4,21 @@ import os.log
 
 private let log = Logger(subsystem: "com.jaredh159.dictator", category: "Config")
 
-struct Config: Codable {
-    let openaiApiKey: String
-    let cleanupPrompt: String?
-    let hotkey: String?
+struct Personality: Codable, Identifiable {
+    let name: String
+    let hotkey: String
+    let prompt: String
+
+    var id: String { name }
 
     var parsedHotkey: (keyCode: UInt32, modifiers: UInt32) {
-        parseHotkey(hotkey ?? "cmd-shift-k")
+        parseHotkey(hotkey)
     }
+}
+
+struct Config: Codable {
+    let openaiApiKey: String
+    let personalities: [Personality]
 
     static let shared: Config? = {
         let configPath = FileManager.default.homeDirectoryForCurrentUser

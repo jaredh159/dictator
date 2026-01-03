@@ -11,7 +11,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         setupMenuBar()
-        setupHotkey()
+        setupHotkeys()
         recorder.onComplete = { [weak self] in
             self?.popupWindow?.orderOut(nil)
         }
@@ -25,36 +25,62 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         let menu = NSMenu()
-        menu.addItem(NSMenuItem(title: "Show Window (⌘⇧K)", action: #selector(showPopup), keyEquivalent: ""))
-        menu.addItem(NSMenuItem.separator())
+        if let personalities = Config.shared?.personalities {
+            for personality in personalities {
+                let hotkeyDisplay = personality.hotkey
+                    .replacingOccurrences(of: "cmd", with: "⌘")
+                    .replacingOccurrences(of: "shift", with: "⇧")
+                    .replacingOccurrences(of: "opt", with: "⌥")
+                    .replacingOccurrences(of: "ctrl", with: "⌃")
+                    .replacingOccurrences(of: "-", with: "")
+                    .uppercased()
+                menu.addItem(NSMenuItem(
+                    title: "\(personality.name) (\(hotkeyDisplay))",
+                    action: nil,
+                    keyEquivalent: ""
+                ))
+            }
+            menu.addItem(NSMenuItem.separator())
+        }
         menu.addItem(NSMenuItem(title: "Quit", action: #selector(quit), keyEquivalent: "q"))
 
         statusItem.menu = menu
     }
 
-    private func setupHotkey() {
-        let (keyCode, modifiers) = Config.shared?.parsedHotkey ?? (0x28, UInt32(cmdKey | shiftKey))
+    private func setupHotkeys() {
+        guard let personalities = Config.shared?.personalities else { return }
+
         hotkeyManager = HotkeyManager()
-        hotkeyManager?.register(keyCode: keyCode, modifiers: modifiers) { [weak self] in
-            DispatchQueue.main.async {
-                self?.handleHotkey()
-            }
+        var hotkeys: [(id: UInt32, keyCode: UInt32, modifiers: UInt32, handler: () -> Void)] = []
+
+        for (index, personality) in personalities.enumerated() {
+            let (keyCode, modifiers) = personality.parsedHotkey
+            hotkeys.append((
+                id: UInt32(index + 1),
+                keyCode: keyCode,
+                modifiers: modifiers,
+                handler: { [weak self] in
+                    DispatchQueue.main.async {
+                        self?.handleHotkey(for: personality)
+                    }
+                }
+            ))
         }
+
+        hotkeyManager?.registerMultiple(hotkeys: hotkeys)
     }
 
-    @objc private func showPopup() {
-        showWindowAndRecord()
-    }
-
-    private func handleHotkey() {
+    private func handleHotkey(for personality: Personality) {
         if recorder.isRecording {
             recorder.stopRecording()
         } else {
-            showWindowAndRecord()
+            showWindowAndRecord(with: personality)
         }
     }
 
-    private func showWindowAndRecord() {
+    private func showWindowAndRecord(with personality: Personality) {
+        recorder.currentPersonality = personality
+
         if popupWindow == nil {
             createPopupWindow()
         }
@@ -73,7 +99,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let contentView = ContentView(recorder: recorder)
 
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 200, height: 40),
+            contentRect: NSRect(x: 0, y: 0, width: 240, height: 40),
             styleMask: [.borderless],
             backing: .buffered,
             defer: false

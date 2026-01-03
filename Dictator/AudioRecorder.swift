@@ -12,6 +12,7 @@ class AudioRecorder: ObservableObject {
     @Published var isCleaningUp = false
     @Published var transcription: String?
     @Published var recordingURL: URL?
+    @Published var currentPersonality: Personality?
 
     private var audioRecorder: AVAudioRecorder?
     private let whisperService = WhisperService()
@@ -89,6 +90,8 @@ class AudioRecorder: ObservableObject {
         isTranscribing = true
         transcription = nil
 
+        let prompt = currentPersonality?.prompt
+
         Task {
             do {
                 let rawText = try await whisperService.transcribe(audioURL: url)
@@ -97,7 +100,7 @@ class AudioRecorder: ObservableObject {
                 self.isTranscribing = false
                 self.isCleaningUp = true
 
-                let cleanedText = try await cleanupService.cleanup(text: rawText)
+                let cleanedText = try await cleanupService.cleanup(text: rawText, prompt: prompt)
                 self.transcription = cleanedText
                 self.copyToClipboard(cleanedText)
                 log.info("Cleanup complete, copied to clipboard: \(cleanedText, privacy: .public)")
