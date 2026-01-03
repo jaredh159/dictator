@@ -25,3 +25,5 @@ Package.resolved
 .DS_Store
 *.swp
 *~
+
+TMP_*.md

@@ -1,10 +1,11 @@
 import Carbon.HIToolbox
 import Foundation
+import TOMLKit
 import os.log
 
 private let log = Logger(subsystem: "com.jaredh159.dictator", category: "Config")
 
-struct Personality: Codable, Identifiable {
+struct Personality: Identifiable {
     let name: String
     let hotkey: String
     let prompt: String
@@ -16,25 +17,67 @@ struct Personality: Codable, Identifiable {
     }
 }
 
-struct Config: Codable {
+struct Config {
     let openaiApiKey: String
     let personalities: [Personality]
 
     static let shared: Config? = {
-        let configPath = FileManager.default.homeDirectoryForCurrentUser
+        let configDir = FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent(".config")
-            .appendingPathComponent("dictator.json")
+            .appendingPathComponent("dictator")
 
-        guard FileManager.default.fileExists(atPath: configPath.path) else {
-            log.error("Config file not found at \(configPath.path, privacy: .public)")
+        let secretsPath = configDir.appendingPathComponent("dictator.secrets.toml")
+        let personalitiesPath = configDir.appendingPathComponent("dictator.personalities.toml")
+
+        // Load secrets
+        guard FileManager.default.fileExists(atPath: secretsPath.path) else {
+            log.error("Secrets file not found at \(secretsPath.path, privacy: .public)")
+            return nil
+        }
+
+        guard FileManager.default.fileExists(atPath: personalitiesPath.path) else {
+            log.error("Personalities file not found at \(personalitiesPath.path, privacy: .public)")
             return nil
         }
 
         do {
-            let data = try Data(contentsOf: configPath)
-            let config = try JSONDecoder().decode(Config.self, from: data)
-            log.info("Config loaded successfully")
-            return config
+            // Parse secrets TOML
+            let secretsContent = try String(contentsOf: secretsPath, encoding: .utf8)
+            let secretsTable = try TOMLTable(string: secretsContent)
+
+            guard let apiKey = secretsTable["openai_api_key"]?.string else {
+                log.error("openai_api_key not found in secrets file")
+                return nil
+            }
+
+            // Parse personalities TOML
+            let personalitiesContent = try String(contentsOf: personalitiesPath, encoding: .utf8)
+            let personalitiesTable = try TOMLTable(string: personalitiesContent)
+
+            guard let personalityArray = personalitiesTable["personality"]?.array else {
+                log.error("No [[personality]] entries found in personalities file")
+                return nil
+            }
+
+            var personalities: [Personality] = []
+            for item in personalityArray {
+                guard let table = item.table,
+                      let name = table["name"]?.string,
+                      let hotkey = table["hotkey"]?.string,
+                      let prompt = table["prompt"]?.string else {
+                    log.warning("Skipping invalid personality entry")
+                    continue
+                }
+                personalities.append(Personality(name: name, hotkey: hotkey, prompt: prompt))
+            }
+
+            guard !personalities.isEmpty else {
+                log.error("No valid personalities found")
+                return nil
+            }
+
+            log.info("Config loaded successfully with \(personalities.count) personalities")
+            return Config(openaiApiKey: apiKey, personalities: personalities)
         } catch {
             log.error("Failed to load config: \(error.localizedDescription)")
             return nil

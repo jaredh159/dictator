@@ -20,28 +20,39 @@ Dictator/
 ├── WhisperService.swift   # OpenAI Whisper API client
 ├── TextCleanupService.swift # GPT-4o-mini text cleanup
 ├── HotkeyManager.swift    # Global hotkey (Carbon Events)
-├── Config.swift           # Loads ~/.config/dictator.json
+├── Config.swift           # Loads TOML config from ~/.config/dictator/
 └── Info.plist             # App metadata, mic permission string
 ```
 
 ## Config
 
-User config lives at `~/.config/dictator.json`:
+Config is split into two TOML files in `~/.config/dictator/`:
 
-```json
-{
-  "openaiApiKey": "sk-...",
-  "personalities": [
-    {
-      "name": "Claude",
-      "hotkey": "cmd-shift-k",
-      "prompt": "..."
-    }
-  ]
-}
+**`dictator.secrets.toml`** (not version controlled):
+```toml
+openai_api_key = "sk-..."
+```
+
+**`dictator.personalities.toml`** (version controlled via stow):
+```toml
+[[personality]]
+name = "Claude"
+hotkey = "cmd-shift-k"
+prompt = """
+Your cleanup prompt here...
+"""
+
+[[personality]]
+name = "Slack"
+hotkey = "cmd-shift-s"
+prompt = """
+Another prompt...
+"""
 ```
 
 Each personality has its own hotkey and cleanup prompt. Multiple personalities can be defined.
+
+For dotfiles users: personalities file can live at `~/.dotfiles/dictator/.config/dictator/dictator.personalities.toml` and be stowed.
 
 ## Build
 

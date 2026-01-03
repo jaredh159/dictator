@@ -12,20 +12,30 @@ whisper, cleans up the text with gpt-4o-mini, and copies to clipboard.
 
 ## setup
 
-create a config file at `~/.config/dictator.json`:
+create two config files in `~/.config/dictator/`:
 
-```json
-{
-  "openaiApiKey": "sk-your-key-here",
-  "personalities": [
-    {
-      "name": "Claude",
-      "hotkey": "cmd-shift-k",
-      "prompt": "You are a light text editor. You receive raw transcriptions from a seasoned software engineer that were converted from audio to text. Your job is to do a very light cleanup:\n\n1. Add proper punctuation (periods, commas, etc.)\n2. Split the text into paragraphs at natural idea boundaries—use good granularity\n3. If something looks like a transcription error of a technical/software term, fix it (e.g., \"reacts\" → \"React\", \"know JS\" → \"Node.js\", \"get hub\" → \"GitHub\")\n4. Output as clean markdown\n\nIMPORTANT: Change as little as possible. Do NOT rephrase, summarize, or add content. Do NOT over-edit. Just punctuate, paragraph, and fix obvious transcription mistakes of technical terms. The engineer's voice and wording should remain intact.\n\nReturn ONLY the cleaned markdown, no explanations or preamble."
-    },
-    /* add more personalities here... as desired * /
-  ]
-}
+**`dictator.secrets.toml`** (your api key):
+```toml
+openai_api_key = "sk-your-key-here"
+```
+
+**`dictator.personalities.toml`** (your personalities):
+```toml
+[[personality]]
+name = "Claude"
+hotkey = "cmd-shift-k"
+prompt = """
+You are a light text editor. You receive raw transcriptions from a seasoned
+software engineer that were converted from audio to text. Your job is to do
+a very light cleanup...
+"""
+
+[[personality]]
+name = "Slack"
+hotkey = "cmd-shift-s"
+prompt = """
+Another cleanup prompt here...
+"""
 ```
 
 each personality has:
@@ -34,6 +44,9 @@ each personality has:
 - `hotkey`: unique hotkey to trigger this personality (e.g. `"cmd-shift-k"`,
   `"ctrl-opt-d"`)
 - `prompt`: the system prompt sent to gpt-4o-mini for text cleanup
+
+for dotfiles users: the personalities file can be stowed from
+`~/.dotfiles/dictator/.config/dictator/dictator.personalities.toml`
 
 ## usage
 

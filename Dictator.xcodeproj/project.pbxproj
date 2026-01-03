@@ -15,6 +15,7 @@
 		AAA00001006 /* WhisperService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAA00002008 /* WhisperService.swift */; };
 		AAA00001007 /* TextCleanupService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAA00002009 /* TextCleanupService.swift */; };
 		AAA00001008 /* Config.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAA0000200A /* Config.swift */; };
+		AAA00001009 /* TOMLKit in Frameworks */ = {isa = PBXBuildFile; productRef = AAA0000E001 /* TOMLKit */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -36,6 +37,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AAA00001009 /* TOMLKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -91,6 +93,9 @@
 			dependencies = (
 			);
 			name = Dictator;
+			packageProductDependencies = (
+				AAA0000E001 /* TOMLKit */,
+			);
 			productName = Dictator;
 			productReference = AAA00003001 /* Dictator.app */;
 			productType = "com.apple.product-type.application";
@@ -119,6 +124,9 @@
 				Base,
 			);
 			mainGroup = AAA00005001;
+			packageReferences = (
+				AAA0000F001 /* XCRemoteSwiftPackageReference "TOMLKit" */,
+			);
 			productRefGroup = AAA00005003 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -351,6 +359,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		AAA0000F001 /* XCRemoteSwiftPackageReference "TOMLKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/LebJe/TOMLKit.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.6.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		AAA0000E001 /* TOMLKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AAA0000F001 /* XCRemoteSwiftPackageReference "TOMLKit" */;
+			productName = TOMLKit;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = AAA0000A001 /* Project object */;
 }
